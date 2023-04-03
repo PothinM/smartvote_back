@@ -27,12 +27,16 @@ contract SmartVote {
     
     //@a struct Electeur is pointing to an address to keep track of an elector
     mapping (address => Electeur) electeurs;
+    //mapping noSecuSoc => bool (to keep track of an inscription with a secu number)
+    mapping (uint => bool) noSecuUsed;
     //@a struct Candidat is pointing to an uint to give an id to a candidat
     //mapping (uint => Candidat) Candidats;
     Candidat[] public candidats;
 
     //mapping idCandidat => voix
     mapping (uint => uint) votes;
+
+    //nbVotes (soustrait avec le nb de nft minté pour calculer taux d'abstention)
 
     //modifier need to be owner of the contract
     modifier onlyOwner() {
@@ -91,8 +95,12 @@ contract SmartVote {
         candidats[_index].uri = _candidat.uri;
     }
 
+    //function deleteCandidat
+
     function setElecteur(uint _noSecu) public onlyOwner {
+        require(!noSecuUsed[_noSecu], "Secu number already used");
         electeurs[msg.sender] = Electeur(_noSecu, false, false);
+        noSecuUsed[_noSecu] = true;
     }
 
     function mintCarteElectorale() public view onlyOwner electorExist {
@@ -103,6 +111,9 @@ contract SmartVote {
 
     function vote(uint _idCandidat) public electorExist {
         require(electeurs[msg.sender].mintOk, "Nft needed");
+        require(!electeurs[msg.sender].voteOk, "Vote already done");
+        //require vote ouvert
+
         votes[_idCandidat] += 1;
     }
 
