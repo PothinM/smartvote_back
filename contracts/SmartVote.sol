@@ -1,10 +1,14 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.9;
+pragma solidity ^0.8.18;
 
 contract SmartVote {
     address private CarteElectorale;
-    constructor(address CarteElectoralAddress) {
-        CarteElectorale = CarteElectoralAddress;
+    address public owner;
+
+
+    constructor(address _CarteElectoralTokenAddress) {
+        CarteElectorale = _CarteElectoralTokenAddress;
+        owner = msg.sender;
     }
 
     struct Electeur {
@@ -40,13 +44,13 @@ contract SmartVote {
 
     //modifier need to be owner of the contract
     modifier onlyOwner() {
-        require (msg.sender == address(this), "Not owner");
+        require (msg.sender == owner, "Not owner");
         _;
     }
 
     //require all the parameters to not be empty
     modifier inputCandidatNotEmpty (string calldata _nom, string calldata _prenom, string calldata _partie, string calldata _programmeDescription, string calldata _uri) {
-        require(bytes(_nom).length > 0 && bytes(_prenom).length > 0 && bytes(_partie).length > 0 && bytes(_programmeDescription).length > 0 && bytes(_uri).length > 0, "Un des champs est vide");
+        require(bytes(_nom).length > 0 && bytes(_prenom).length > 0 && bytes(_partie).length > 0 && bytes(_programmeDescription).length > 0 && bytes(_uri).length > 0, "One of the fields is empty");
         _;
     }
 
@@ -60,15 +64,12 @@ contract SmartVote {
         return candidats;
     }
 
+    //return the candidat at index
+    function getCandidat(uint _index) public view returns (Candidat memory) {
+        return candidats[_index];
+    }
+
     //we add a candidat in the candidats array
-    
-    /*function setCandidat(string calldata _nom, string calldata _prenom, string calldata _partie, string calldata _programmeDescription, string calldata _uri) public 
-    inputCandidatNotEmpty( _nom, _prenom, _partie, _programmeDescription, _uri) 
-    onlyOwner {
-        candidats.push(Candidat(
-            _nom, _prenom, _partie,_programmeDescription, _uri
-        ));
-    }*/
     function setCandidat(Candidat calldata _newCandidat) public 
     inputCandidatNotEmpty(_newCandidat.nom, _newCandidat.prenom, _newCandidat.partie, _newCandidat.programmeDescription, _newCandidat.uri)
     onlyOwner {
@@ -76,18 +77,10 @@ contract SmartVote {
     }
 
 
-    /*function updateCandidat(uint _index, string calldata _nom, string calldata _prenom, string calldata _partie, string calldata _programmeDescription, string calldata _uri) public 
-    inputCandidatNotEmpty( _nom, _prenom, _partie, _programmeDescription, _uri) 
-    onlyOwner {
-        candidats[_index].nom = _nom;
-        candidats[_index].prenom = _prenom;
-        candidats[_index].partie = _partie;
-        candidats[_index].programmeDescription = _programmeDescription;
-        candidats[_index].uri = _uri;
-    }*/
     function updateCandidat(uint _index, Candidat calldata _candidat) public 
     inputCandidatNotEmpty(_candidat.nom, _candidat.prenom, _candidat.partie, _candidat.programmeDescription, _candidat.uri)
     onlyOwner {
+        require(_index < candidats.length, "index out of bound");
         candidats[_index].nom = _candidat.nom;
         candidats[_index].prenom = _candidat.prenom;
         candidats[_index].partie = _candidat.partie;
@@ -96,9 +89,24 @@ contract SmartVote {
     }
 
     //function deleteCandidat
+    function deleteCandidat(uint _index) public 
+    onlyOwner {
+        require(_index < candidats.length, "index out of bound");
+
+        for (uint i = _index; i < candidats.length - 1; i++) {
+            candidats[i] = candidats[i +1];
+        }
+        candidats.pop();
+        //solidity delete array (boucle)
+    }
+
+    function getElecteur(address _address) public view returns (Electeur memory) {
+        return electeurs[_address];
+    }
 
     function setElecteur(uint _noSecu) public onlyOwner {
         require(!noSecuUsed[_noSecu], "Secu number already used");
+        require(!(electeurs[msg.sender].noSecuSoc > 0), "Address already used");
         electeurs[msg.sender] = Electeur(_noSecu, false, false);
         noSecuUsed[_noSecu] = true;
     }
@@ -117,12 +125,12 @@ contract SmartVote {
         votes[_idCandidat] += 1;
     }
 
-    function resultat() public view returns (uint256[] storage){
+    /*function resultat() public view returns (uint256[] memory){
         uint256[] storage res;
         for (uint i = 0; i < candidats.length; i++) {
             res.push(votes[i]);
         }
         return res;
-    }
+    }*/
 
 }
