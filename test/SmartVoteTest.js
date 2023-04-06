@@ -45,6 +45,7 @@ describe("SmartVote Test", function () {
             expect(candidats).to.be.not.null;
             expect(candidats[0].nom).to.equal('Eric');
             
+            expect(smartVote.getCandidat(6)).to.be.revertedWith("Candidat doesnt exist");
             const value = await smartVote.getCandidat(0);
             expect(value).to.be.not.null;
             expect(value.nom).to.equal('Eric');
@@ -138,11 +139,12 @@ describe("SmartVote Test", function () {
 
     describe("Fonction electorale", function () {
         it("should mint carteElectorale but only once", async () => {
+            //create electeur
             const noSecu = 160042531111426;
             await smartVote.setElecteur(noSecu);
 
+            //transfert of owner ship and mint
             await ce.transferOwnership(smartVote.address);
-
             await smartVote.mintCarteElectorale();
             
             await expect(smartVote.mintCarteElectorale()).to.be.revertedWith("Nft already minted");
@@ -164,9 +166,11 @@ describe("SmartVote Test", function () {
 
             await expect(smartVote.vote(0)).to.be.revertedWith("Nft needed");
 
+            //transfert of owner ship and mint
             await ce.transferOwnership(smartVote.address);
             await smartVote.mintCarteElectorale();
 
+            expect(smartVote.vote(6)).to.be.revertedWith("Candidat doesnt exist");
             await smartVote.vote(0);
 
             const vote = await smartVote.getVote(0);
@@ -216,9 +220,6 @@ describe("SmartVote Test", function () {
 
             await smartVote.startVote();
             await smartVote.vote(1);
-
-            const tnb = await smartVote.getResultats();
-            console.log(tnb);
         });
     })
     

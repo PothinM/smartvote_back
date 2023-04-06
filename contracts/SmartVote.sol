@@ -12,6 +12,9 @@ contract SmartVote {
         owner = msg.sender;
     }
 
+    //to check if empty field
+    bytes32 constant NULL = "";
+
     struct Electeur {
         uint noSecuSoc;
         bool voteOk;
@@ -64,13 +67,19 @@ contract SmartVote {
         _;
     }
 
+    modifier candidatExist (uint _index) {
+        require(_index <= candidats.length,"Candidat doesnt exist");
+        _;
+    }
+
     //return the array of candidats
     function getCandidats() public view returns (Candidat[] memory) {
         return candidats;
     }
 
     //return the candidat at index
-    function getCandidat(uint _index) public view returns (Candidat memory) {
+    function getCandidat(uint _index) public view candidatExist (_index) 
+    returns (Candidat memory) {
         return candidats[_index];
     }
 
@@ -132,11 +141,10 @@ contract SmartVote {
 
     }
 
-    function vote(uint _idCandidat) public electorExist {
+    function vote(uint _idCandidat) public electorExist candidatExist (_idCandidat) {
         require(electeurs[msg.sender].mintOk, "Nft needed");
         require(!electeurs[msg.sender].voteOk, "Vote already done");
         require(voteOuvert,"Vote not started");
-        //require candidat exist
 
         electeurs[msg.sender].voteOk = true;
         countVote += 1;
@@ -144,7 +152,6 @@ contract SmartVote {
     }
 
     function getVote(uint _idCandidat) public view returns (uint) {
-        //require candidat exist
         return votes[_idCandidat];
     }
 
