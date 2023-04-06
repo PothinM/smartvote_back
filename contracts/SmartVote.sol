@@ -1,13 +1,14 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.18;
+import "./CarteElectorale.sol";
 
 contract SmartVote {
-    address private CarteElectorale;
+    address private CarteElectoraleAddress;
     address public owner;
-
+    CarteElectorale ce;
 
     constructor(address _CarteElectoralTokenAddress) {
-        CarteElectorale = _CarteElectoralTokenAddress;
+        ce = CarteElectorale(_CarteElectoralTokenAddress);
         owner = msg.sender;
     }
 
@@ -26,7 +27,11 @@ contract SmartVote {
     }
 
     //vote commencé 
-    bool public constant debutVote = false;
+    bool public voteOuvert = true;//changer à false
+    bool public paused = false;
+
+    //nb de vote
+    uint public countVote = 0;
 
     
     //@a struct Electeur is pointing to an address to keep track of an elector
@@ -88,7 +93,6 @@ contract SmartVote {
         candidats[_index].uri = _candidat.uri;
     }
 
-    //function deleteCandidat
     function deleteCandidat(uint _index) public 
     onlyOwner {
         require(_index < candidats.length, "index out of bound");
@@ -97,7 +101,6 @@ contract SmartVote {
             candidats[i] = candidats[i +1];
         }
         candidats.pop();
-        //solidity delete array (boucle)
     }
 
     function getElecteur(address _address) public view returns (Electeur memory) {
@@ -111,18 +114,68 @@ contract SmartVote {
         noSecuUsed[_noSecu] = true;
     }
 
-    function mintCarteElectorale() public view onlyOwner electorExist {
+    function deleteElecteur(uint _noSecu) public onlyOwner {
+        require(noSecuUsed[_noSecu], "Secu number not used");
+        require(electeurs[msg.sender].noSecuSoc == _noSecu, "Address isnt the address of this secu number");
+        noSecuUsed[_noSecu] = false;
+        delete electeurs[msg.sender];
+    }
+
+    function mintCarteElectorale() public electorExist {
         require(!electeurs[msg.sender].mintOk, "Nft already minted");
+        require(!paused,"Mint paused");
         
+        //changement du state pour l'electeur
+        electeurs[msg.sender].mintOk = true;
         //appel au contrat CarteElectorale pour minter le nft et l'envoyer à l'élécteur
+        ce.safeMint(msg.sender);
+
     }
 
     function vote(uint _idCandidat) public electorExist {
         require(electeurs[msg.sender].mintOk, "Nft needed");
         require(!electeurs[msg.sender].voteOk, "Vote already done");
-        //require vote ouvert
+        require(voteOuvert,"Vote not started");
+        //require candidat exist
 
+        electeurs[msg.sender].voteOk = true;
+        countVote += 1;
         votes[_idCandidat] += 1;
+    }
+
+    function getVote(uint _idCandidat) public view returns (uint) {
+        //require candidat exist
+        return votes[_idCandidat];
+    }
+
+    function getResultats() public view returns(uint, uint256[] memory) {
+        
+        //vote blanc = nombre de CE minté - nombre de vote
+        uint256 voteBlanc = ce.getCarteElectoraleCounter() - countVote;
+        
+        //on crée un tableau de resultats de la taille du nombre de candidats
+        uint256[] memory resultats = new uint256[](candidats.length);
+        for (uint i = 0; i < candidats.length; i++) { 
+            resultats[i] = votes[i]; //on assigne le nombre de vote pour chaque candidat
+        }
+
+        return (voteBlanc, resultats);
+    }
+
+    function startVote() public onlyOwner {
+        //ouvre les votes
+        voteOuvert = true;
+        //pause mint
+        ce.pause();
+    }
+
+    function unpause() public onlyOwner {
+        ce.unpause();
+    }
+
+    function voteOver() public onlyOwner {
+        voteOuvert = false;
+        
     }
 
     /*function resultat() public view returns (uint256[] memory){

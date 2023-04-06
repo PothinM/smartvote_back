@@ -8,8 +8,12 @@ describe("SmartVote Test", function () {
         [owner] = await ethers.getSigners();
 
         // A helper to get the contracts instance and deploy it locally
+        const CarteElectorale = await ethers.getContractFactory("CarteElectorale");
+        ce = await CarteElectorale.deploy();
+        
         const SmartVote = await ethers.getContractFactory("SmartVote");
-        smartVote = await SmartVote.deploy('0x95222290DD7278Aa3Ddd389Cc1E1d165CC4BAfe5');
+        smartVote = await SmartVote.deploy(ce.address);
+        
 
     });
 
@@ -80,7 +84,7 @@ describe("SmartVote Test", function () {
         it("should delete a candidat and won't get it", async () => {
             //Create a candidat
             const candidat = {
-                nom: 'un',
+                nom: 'Jean',
                 prenom: 'Luc',
                 partie: 'Comm',
                 programmeDescription: 'lorem ipsum dolor sitamet',
@@ -105,7 +109,7 @@ describe("SmartVote Test", function () {
     });
 
     describe("Electeur CRUD", function () {
-        it("should create a new electeur", async () => {
+        it("should create a new electeur and get it", async () => {
             const noSecu = 160042531111426;
             await smartVote.setElecteur(noSecu);
     
@@ -116,8 +120,107 @@ describe("SmartVote Test", function () {
             //if we create another electeur with this address : revert
             await expect(smartVote.setElecteur(noSecu)).to.be.reverted;
         });
+
+        it("should delete an electeur and wont get any values", async () => {
+            const noSecu = 160042531111426;
+
+            await expect(smartVote.deleteElecteur(noSecu)).to.be.revertedWith("Secu number not used");
+
+            await smartVote.setElecteur(noSecu);
+            const electeur = await smartVote.getElecteur(owner.address);
+
+            await smartVote.deleteElecteur(noSecu);
+            
+            const electeurDeleted = await smartVote.getElecteur(owner.address);
+            expect (electeurDeleted.noSecuSoc).to.equal(0);
+        });
     });
 
+    describe("Fonction electorale", function () {
+        it("should mint carteElectorale but only once", async () => {
+            const noSecu = 160042531111426;
+            await smartVote.setElecteur(noSecu);
+
+            await ce.transferOwnership(smartVote.address);
+
+            await smartVote.mintCarteElectorale();
+            
+            await expect(smartVote.mintCarteElectorale()).to.be.revertedWith("Nft already minted");
+
+        });
+        it("should vote but only once", async () => {
+            //create electeur
+            const noSecu = 160042531111426;
+            await smartVote.setElecteur(noSecu);
+            //Create a candidat
+            const candidat = {
+                nom: 'Eric',
+                prenom: 'Dupre',
+                partie: 'Comm',
+                programmeDescription: 'lorem ipsum dolor sitamet',
+                uri: 'ldkjnlskfjsklfsjfs',
+            }
+            await smartVote.setCandidat(candidat);
+
+            await expect(smartVote.vote(0)).to.be.revertedWith("Nft needed");
+
+            await ce.transferOwnership(smartVote.address);
+            await smartVote.mintCarteElectorale();
+
+            await smartVote.vote(0);
+
+            const vote = await smartVote.getVote(0);
+            expect (vote).to.be.equal(1);
+
+            await expect(smartVote.vote(0)).to.be.revertedWith("Vote already done");
+        });
+        it("should pause & unpause mint", async () => {
+            //create electeur
+            const noSecu = 160042531111426;
+            await smartVote.setElecteur(noSecu);
+
+            await ce.transferOwnership(smartVote.address);
+
+            await smartVote.startVote();
+
+            await expect(smartVote.mintCarteElectorale()).to.be.revertedWith("Pausable: paused");
+
+            await smartVote.unpause();
+
+            smartVote.mintCarteElectorale();
+        });
+        it("should count vote blanc & votes", async () => {
+            //create electeur
+            const noSecu = 160042531111426;
+            await smartVote.setElecteur(noSecu);
+            //Create a candidat
+            const candidat = {
+                nom: 'Eric',
+                prenom: 'Dupre',
+                partie: 'Comm',
+                programmeDescription: 'lorem ipsum dolor sitamet',
+                uri: 'ldkjnlskfjsklfsjfs',
+            }
+            const candidat2 = {
+                nom: 'Eric',
+                prenom: 'Dupre',
+                partie: 'Comm',
+                programmeDescription: 'lorem ipsum dolor sitamet',
+                uri: 'ldkjnlskfjsklfsjfs',
+            }
+            await smartVote.setCandidat(candidat);
+            await smartVote.setCandidat(candidat2);
+
+            await ce.transferOwnership(smartVote.address);
+            smartVote.mintCarteElectorale()
+
+            await smartVote.startVote();
+            await smartVote.vote(1);
+
+            const tnb = await smartVote.getResultats();
+            console.log(tnb);
+        });
+    })
     
 
     // it("should revert when trying to transfer via safeTransferFrom", async () => {
