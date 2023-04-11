@@ -7,26 +7,38 @@
 const hre = require("hardhat");
 
 async function main() {
-  const currentTimestampInSeconds = Math.round(Date.now() / 1000);
-  const unlockTime = currentTimestampInSeconds + 60;
+  // Get the contract owner
+  const contractOwner = await ethers.getSigners();
+  console.log(`Deploying contract from: ${contractOwner[0].address}`);
 
-  const lockedAmount = hre.ethers.utils.parseEther("0.001");
+  // Hardhat helper to get the ethers contractFactory object
+  const CarteElectoraleNft = await ethers.getContractFactory('CarteElectorale');
+  // Deploy the NFT contract
+  console.log('Deploying CarteElectorale...');
+  const carteElectoraleNft = await CarteElectoraleNft.deploy();
+  await carteElectoraleNft.deployed();
+  console.log(`CarteElectorale deployed to: ${carteElectoraleNft.address}`);
 
-  const Lock = await hre.ethers.getContractFactory("Lock");
-  const lock = await Lock.deploy(unlockTime, { value: lockedAmount });
 
-  await lock.deployed();
+  // Hardhat helper to get the ethers contractFactory object
+  const SmartVote = await ethers.getContractFactory('SmartVote');
+  // Deploy the NFT contract
+  console.log('Deploying CarteElectorale...');
+  const smartVote = await SmartVote.deploy(carteElectoraleNft.address);
+  await smartVote.deployed();
+  console.log(`SmartVote deployed to: ${smartVote.address}`);
 
-  console.log(
-    `Lock with ${ethers.utils.formatEther(
-      lockedAmount
-    )}ETH and unlock timestamp ${unlockTime} deployed to ${lock.address}`
-  );
+  //transfering ownership from contract owner to smartVote
+  await carteElectoraleNft.transferOwnership(smartVote.address);
+  console.log("Transfered ownership from contract owner to smartVote address");
+
 }
 
 // We recommend this pattern to be able to use async/await everywhere
 // and properly handle errors.
-main().catch((error) => {
-  console.error(error);
-  process.exitCode = 1;
-});
+main()
+  .then(() => process.exit(0))
+  .catch((error) => {
+    console.error(error);
+    process.exitCode = 1;
+  });

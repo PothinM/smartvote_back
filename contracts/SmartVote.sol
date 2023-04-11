@@ -30,7 +30,7 @@ contract SmartVote {
     }
 
     //vote commencé 
-    bool public voteOuvert = true;//changer à false
+    bool public voteOuvert = false;//changer à false
     bool public paused = false;
 
     //nb de vote
@@ -48,7 +48,6 @@ contract SmartVote {
     //mapping idCandidat => voix
     mapping (uint => uint) votes;
 
-    //nbVotes (soustrait avec le nb de nft minté pour calculer taux d'abstention)
 
     //modifier need to be owner of the contract
     modifier onlyOwner() {
@@ -67,11 +66,16 @@ contract SmartVote {
         _;
     }
 
+    /*modifier electorNotDeleted {
+        require(!electeurs[msg.sender].deleted, "Elector deleted");
+        _;
+    }*/
+
     modifier candidatExist (uint _index) {
         require(_index <= candidats.length,"Candidat doesnt exist");
         _;
     }
-
+    
     //return the array of candidats
     function getCandidats() public view returns (Candidat[] memory) {
         return candidats;
@@ -167,6 +171,10 @@ contract SmartVote {
         }
 
         return (voteBlanc, resultats);
+    }
+
+    function getVoteStarted() public view returns (bool) {
+        return voteOuvert;
     }
 
     function startVote() public onlyOwner {

@@ -81,7 +81,6 @@ describe("SmartVote Test", function () {
             expect(value.nom).to.equal('Michel');
         });
 
-        //delete
         it("should delete a candidat and won't get it", async () => {
             //Create a candidat
             const candidat = {
@@ -170,6 +169,8 @@ describe("SmartVote Test", function () {
             await ce.transferOwnership(smartVote.address);
             await smartVote.mintCarteElectorale();
 
+            await smartVote.startVote();
+
             expect(smartVote.vote(6)).to.be.revertedWith("Candidat doesnt exist");
             await smartVote.vote(0);
 
@@ -220,6 +221,9 @@ describe("SmartVote Test", function () {
 
             await smartVote.startVote();
             await smartVote.vote(1);
+
+            const res = await smartVote.getResultats();
+            console.log(res);
         });
     })
     
