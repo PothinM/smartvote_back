@@ -6,27 +6,41 @@ async function main() {
     const contractOwner = signers[0].address;
 
     console.log('Getting the Electoral card contract ...\n');
-    const carteElectoraleAddress = '0xf857A2d93dEc386687cFa58E48acFbd66d402650...';
+    const carteElectoraleAddress = '0xe28E8F56dBfbbdC46ef7aDBa81107921e631418e';
     console.log(`At ${carteElectoraleAddress}...\n`);
-    const carteElectoraleNFT =await ethers.getContractAt('CarteElectorale', carteElectoraleAddress);
+    const carteElectoraleNFT = await ethers.getContractAt('CarteElectorale', carteElectoraleAddress);
     
     console.log('Getting the Smart Vote contract ...\n');
-    const smartVoteAddress = '0x20ef9C0DCc7E63ecaB49E53004Bb8d7721f6D37E...';
+    const smartVoteAddress = '0x7eD9480879Fc003469E68c43CbCBfdB262Db12a6';
     console.log(`At ${smartVoteAddress}...\n`);
-    const smartVote =await ethers.getContractAt('SmartVote', smartVoteAddress);
+    const smartVote = await ethers.getContractAt('SmartVote', smartVoteAddress);
 
     let txSwitchVote = await smartVote.getVoteStarted();
 
-    let txResultats = await smartVote.getResultats();
-    console.log("resultats : "+ txResultats);
+    console.log(txSwitchVote);
     
-    
-    /*if (txSwitchVote){
-        console.log("Vote ouvert");
+    if(txSwitchVote){
+        console.log('Vote started.');
+        console.log('Stopping the vote...');
+
+        let txVoteOver = await smartVote.voteOver();
+        let txUnpause = await smartVote.unpause();
+        await txVoteOver.wait();
+        await txUnpause.wait();
+
+        console.log('Vote stopped & NFT unpaused');
+
     }
-    else{
-        console.log("Vote fermé");
-    }*/
+    if(!txSwitchVote)
+    {
+        console.log('Vote not started.')
+        console.log('Starting the vote...')
+
+        let txStartVote = await smartVote.startVote();
+        await txStartVote.wait();
+
+        console.log('Vote started & NFT paused')
+    }
 
 
 }

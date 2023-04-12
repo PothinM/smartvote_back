@@ -19,6 +19,8 @@ describe("CarteElectorale Token Test", function () {
         //Check that owner address owns the token ID 0
         const value = await carteElectorale.ownerOf(0);
         expect(value).to.equal(owner.address);
+        const balanceOf = await carteElectorale.balanceOf(owner.address);
+        expect(balanceOf).to.equal(1);
     });
 
 

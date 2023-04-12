@@ -18,14 +18,17 @@ contract CarteElectorale is ERC721, ERC721URIStorage, Pausable, Ownable {
     uint256 private carteElectoraleCounter = 0;
     constructor() ERC721("CarteElectorale", "CEF") {}
 
+    /// @notice owner can pause the contract
     function pause() public onlyOwner {
         _pause();
     }
 
+    /// @notice owner can unpause the contract
     function unpause() public onlyOwner {
         _unpause();
     }
 
+    /// @notice Allow the ERC721 to be a solbound token, to not be transferred and linked only to one wallet
     function _beforeTokenTransfer(address from, address to, uint256 tokenId, uint256 batchSize)
         internal
         whenNotPaused
@@ -35,10 +38,15 @@ contract CarteElectorale is ERC721, ERC721URIStorage, Pausable, Ownable {
         super._beforeTokenTransfer(from, to, tokenId, batchSize);
     }
     
+    /// return the counter of Carte electorale minted (starting at 1)
     function getCarteElectoraleCounter() public view returns (uint) {
         return carteElectoraleCounter;
     }
 
+    /// @notice Mint the CE to an address, can be done only by owner
+    /// @dev assign the curent token id to this token and then
+    /// @dev increment the carte electorale counter (first nft would be 1) and the tokenId number (first nft will be 0)
+    /// @param to address to send the CE
     function safeMint(address to) public onlyOwner {
         carteElectoraleCounter +=1; //increment of tokencounter
                 

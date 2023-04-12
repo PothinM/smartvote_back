@@ -223,8 +223,49 @@ describe("SmartVote Test", function () {
             await smartVote.vote(1);
 
             const res = await smartVote.getResultats();
-            console.log(res);
+            expect(res[0]).to.equal(0);
+            expect(res[1][1]).to.equal(1);
         });
+        it("should get voteOuvert", async () => {
+            const voteNotStarted = await smartVote.getVoteStarted();
+            expect(voteNotStarted).to.be.false;
+
+            await ce.transferOwnership(smartVote.address);
+            await smartVote.startVote();
+            
+            const voteStarted = await smartVote.getVoteStarted();
+            expect(voteStarted).to.be.true;
+        });
+        it("should start/end vote", async () => {
+            const voteNotStarted = await smartVote.getVoteStarted();
+            expect(voteNotStarted).to.be.false;
+
+            await ce.transferOwnership(smartVote.address);
+            await smartVote.startVote();
+            
+            const voteStarted = await smartVote.getVoteStarted();
+            expect(voteStarted).to.be.true;
+
+            await smartVote.voteOver();
+
+            const voteEndend = await smartVote.getVoteStarted();
+            expect(voteEndend).to.be.false;
+        });
+        it("should pause/unpause CE via SmartVote", async () => {
+            const notPaused = await ce.paused();
+            expect(notPaused).to.be.false;
+
+            await ce.transferOwnership(smartVote.address);
+
+            await smartVote.pause();
+            const paused = await ce.paused();
+            expect(paused).to.be.true;
+
+            await smartVote.unpause();
+            const unPaused = await ce.paused();
+            expect(unPaused).to.be.false;
+            
+        })
     })
     
 

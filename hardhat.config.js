@@ -2,6 +2,7 @@ require("@nomicfoundation/hardhat-toolbox");
 require("@nomiclabs/hardhat-ethers");
 require("@nomicfoundation/hardhat-chai-matchers");
 require("hardhat-gas-reporter");
+require('solidity-coverage')
 //
 require('dotenv').config();
 
@@ -17,10 +18,23 @@ const MUMBAI_API_KEY = process.env.STAGING_MUMBAI_KEY;
 // Beware: NEVER put real Ether into testing accounts
 const GOERLI_PRIVATE_KEY = process.env.PRIVATE_KEY;
 
+//GAS REPORTER
+const REPORT_GAS = process.env.REPORT_GAS;
+const COINMARKETCAP_API_KEY = process.env.COINMARKETCAP_API_KEY;
+
+
 
 /** @type import('hardhat/config').HardhatUserConfig */
 module.exports = {
   solidity: "0.8.18",
+  gasReporter: {
+    enabled: REPORT_GAS,
+    outputFile: "gas-report.txt",
+    noColors: true,
+    currency: "EUR",
+    coinmarketcap: COINMARKETCAP_API_KEY,
+    token: "MATIC",
+  },
   networks: {
       goerli: {
         settings: {

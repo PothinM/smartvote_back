@@ -6,12 +6,12 @@ async function main() {
     const contractOwner = signers[0].address;
 
     console.log('Getting the Electoral card contract ...\n');
-    const carteElectoraleAddress = '0xf857A2d93dEc386687cFa58E48acFbd66d402650';
+    const carteElectoraleAddress = '0xe28E8F56dBfbbdC46ef7aDBa81107921e631418e';
     console.log(`At ${carteElectoraleAddress}...\n`);
     const carteElectoraleNFT =await ethers.getContractAt('CarteElectorale', carteElectoraleAddress);
     
     console.log('Getting the Smart Vote contract ...\n');
-    const smartVoteAddress = '0x20ef9C0DCc7E63ecaB49E53004Bb8d7721f6D37E';
+    const smartVoteAddress = '0x7eD9480879Fc003469E68c43CbCBfdB262Db12a6';
     console.log(`At ${smartVoteAddress}...\n`);
     const smartVote =await ethers.getContractAt('SmartVote', smartVoteAddress);
 
@@ -20,20 +20,55 @@ async function main() {
 
     //creating four candidats
     //Create a candidat
-    for (let index = 1; index < 4; index++) {
+    const c1 = {
+        nom: 'Eric',
+        prenom: 'Dupre',
+        partie: 'Gauche',
+        programmeDescription: 
+            'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.',
+        uri: 'ipfs://bafybeidsakn2fq6ijearehy37se4brdvogazqjllto2lnqtfa5tc7afe7u',
+    }
+
+    const c2 = {
+        nom: 'Jean Paul',
+        prenom: 'De lacourt',
+        partie: 'Centre',
+        programmeDescription: 
+            'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.',
+        uri: 'ipfs://bafybeidsakn2fq6ijearehy37se4brdvogazqjllto2lnqtfa5tc7afe7u',
+    }
+
+    const c3 = {
+        nom: 'Philippe',
+        prenom: 'Dupont',
+        partie: 'Droite',
+        programmeDescription: 
+            'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.',
+        uri: 'ipfs://bafybeidsakn2fq6ijearehy37se4brdvogazqjllto2lnqtfa5tc7afe7u',
+    }
+    const candidats = [c1,c2,c3];
+    for (let index = 0; index < candidats.length; index++) {
+        let txCandidat = await smartVote.setCandidat(candidats[index]);
+        await txCandidat.wait(); // wait for this tx to finish to avoid nonce issues
+        console.log(`Candidat ${index} created`);
+    }
+
+    /*for (let index = 1; index < 4; index++) {
         const candidat = {
             nom: 'Eric'+index,
             prenom: 'Dupre',
             partie: 'Comm',
-            programmeDescription: 'lorem ipsum dolor sitamet',
-            uri: 'ldkjnlskfjsklfsjfs',
+            programmeDescription: 
+                'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.',
+            uri: 'ipfs://bafybeidsakn2fq6ijearehy37se4brdvogazqjllto2lnqtfa5tc7afe7u',
         }
 
         let txCandidat = await smartVote.setCandidat(candidat);
         await txCandidat.wait(); // wait for this tx to finish to avoid nonce issues
         console.log(`Candidat ${index} created`);
-    }
+    }*/
 
+    /*
     //creating an electeur
     const noSecu = 160042531111426;
     let txElecteur = await smartVote.setElecteur(noSecu);
@@ -55,7 +90,7 @@ async function main() {
     //get resultats
     let txResultats = await smartVote.getResultats();
     console.log("resultats : "+ txResultats);
-    
+    */
 
     
 }
